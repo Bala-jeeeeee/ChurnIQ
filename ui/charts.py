@@ -1,15 +1,15 @@
 """ChurnIQ – Plotly chart factory."""
-
+ 
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
-
+ 
 _PALETTE = px.colors.qualitative.Set2
 _CHURN_COLORS = {0: "#2ecc71", 1: "#e74c3c"}
-
-
+ 
+ 
 def churn_distribution(df: pd.DataFrame) -> go.Figure:
     counts = df["Churn"].value_counts().reset_index()
     counts.columns = ["Churn", "Count"]
@@ -20,8 +20,8 @@ def churn_distribution(df: pd.DataFrame) -> go.Figure:
                  title="Churn Distribution", hole=0.4)
     fig.update_traces(textinfo="percent+label")
     return fig
-
-
+ 
+ 
 def churn_by_category(df: pd.DataFrame, col: str, title: str) -> go.Figure:
     grp = df.groupby([col, "Churn"]).size().reset_index(name="Count")
     grp["Status"] = grp["Churn"].map({0: "Retained", 1: "Churned"})
@@ -30,8 +30,8 @@ def churn_by_category(df: pd.DataFrame, col: str, title: str) -> go.Figure:
                  barmode="group", title=title)
     fig.update_layout(xaxis_tickangle=-30)
     return fig
-
-
+ 
+ 
 def churn_rate_by_category(df: pd.DataFrame, col: str, title: str) -> go.Figure:
     grp = df.groupby(col)["Churn"].mean().reset_index()
     grp.columns = [col, "Churn Rate"]
@@ -43,8 +43,8 @@ def churn_rate_by_category(df: pd.DataFrame, col: str, title: str) -> go.Figure:
     fig.update_traces(texttemplate="%{text:.1f}%", textposition="outside")
     fig.update_layout(xaxis_tickangle=-30)
     return fig
-
-
+ 
+ 
 def numeric_histogram(df: pd.DataFrame, col: str, title: str) -> go.Figure:
     fig = px.histogram(df, x=col, color="Churn",
                        color_discrete_map=_CHURN_COLORS,
@@ -53,17 +53,40 @@ def numeric_histogram(df: pd.DataFrame, col: str, title: str) -> go.Figure:
                        labels={"Churn": "Status"})
     fig.for_each_trace(lambda t: t.update(name="Retained" if t.name == "0" else "Churned"))
     return fig
-
-
+ 
+ 
 def correlation_heatmap(df: pd.DataFrame, num_cols: list) -> go.Figure:
-    corr = df[num_cols + ["Churn"]].corr()
-    fig = px.imshow(corr, color_continuous_scale="RdBu_r",
-                    zmin=-1, zmax=1,
-                    title="Correlation Heatmap", text_auto=".2f",
-                    aspect="auto")
+    # Drop city if still present (mismatched synthetic data)
+    clean = df.drop(columns=["city"], errors="ignore")
+    cols = [c for c in num_cols if c != "city"] + ["Churn"]
+    corr = clean[cols].corr().round(2)
+ 
+    fig = go.Figure(data=go.Heatmap(
+        z=corr.values,
+        x=corr.columns.tolist(),
+        y=corr.index.tolist(),
+        colorscale="RdBu_r",
+        zmid=0,
+        zmin=-1,
+        zmax=1,
+        text=corr.values,
+        texttemplate="%{text:.2f}",
+        textfont={"size": 8},
+        colorbar=dict(title="r", thickness=15),
+    ))
+    n = len(cols)
+    cell = 42  # px per cell
+    fig.update_layout(
+        title="Correlation Heatmap",
+        width=max(800, n * cell + 200),
+        height=max(700, n * cell + 200),
+        xaxis=dict(tickangle=-45, tickfont=dict(size=10), side="bottom"),
+        yaxis=dict(tickfont=dict(size=10), autorange="reversed"),
+        margin=dict(l=160, r=80, t=80, b=160),
+    )
     return fig
-
-
+ 
+ 
 def revenue_boxplot(df: pd.DataFrame) -> go.Figure:
     fig = px.box(df, x="Churn", y="total_revenue",
                  color="Churn",
@@ -72,8 +95,8 @@ def revenue_boxplot(df: pd.DataFrame) -> go.Figure:
                  labels={"Churn": "Status", "total_revenue": "Total Revenue"})
     fig.update_xaxes(ticktext=["Retained", "Churned"], tickvals=[0, 1])
     return fig
-
-
+ 
+ 
 def tenure_histogram(df: pd.DataFrame) -> go.Figure:
     fig = px.histogram(df, x="tenure_months", color="Churn",
                        color_discrete_map=_CHURN_COLORS,
@@ -81,8 +104,8 @@ def tenure_histogram(df: pd.DataFrame) -> go.Figure:
                        title="Tenure Distribution by Churn Status")
     fig.for_each_trace(lambda t: t.update(name="Retained" if t.name == "0" else "Churned"))
     return fig
-
-
+ 
+ 
 def nps_violin(df: pd.DataFrame) -> go.Figure:
     fig = px.violin(df, x="Churn", y="nps_score",
                     color="Churn",
@@ -91,8 +114,8 @@ def nps_violin(df: pd.DataFrame) -> go.Figure:
                     title="NPS Score Distribution by Churn")
     fig.update_xaxes(ticktext=["Retained", "Churned"], tickvals=[0, 1])
     return fig
-
-
+ 
+ 
 def csat_bar(df: pd.DataFrame) -> go.Figure:
     grp = df.groupby(["csat_score", "Churn"]).size().reset_index(name="Count")
     grp["Status"] = grp["Churn"].map({0: "Retained", 1: "Churned"})
@@ -100,8 +123,8 @@ def csat_bar(df: pd.DataFrame) -> go.Figure:
                  color_discrete_map={"Retained": "#2ecc71", "Churned": "#e74c3c"},
                  barmode="group", title="CSAT Score vs Churn")
     return fig
-
-
+ 
+ 
 def segment_sunburst(df: pd.DataFrame) -> go.Figure:
     grp = df.groupby(["customer_segment", "contract_type"])["Churn"].agg(
         ["mean", "count"]).reset_index()
@@ -111,10 +134,10 @@ def segment_sunburst(df: pd.DataFrame) -> go.Figure:
                       color_continuous_scale="RdYlGn_r",
                       title="Customer Segment & Contract Type vs Churn Rate")
     return fig
-
-
+ 
+ 
 # ── Training / Evaluation charts ──────────────────────────────────────────
-
+ 
 def confusion_matrix_chart(cm: list, model_name: str) -> go.Figure:
     labels = ["Retained", "Churned"]
     z = [[cm[0][0], cm[0][1]], [cm[1][0], cm[1][1]]]
@@ -129,8 +152,8 @@ def confusion_matrix_chart(cm: list, model_name: str) -> go.Figure:
         xaxis_title="Predicted", yaxis_title="Actual",
     )
     return fig
-
-
+ 
+ 
 def roc_curve_chart(results: dict) -> go.Figure:
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode="lines",
@@ -144,8 +167,8 @@ def roc_curve_chart(results: dict) -> go.Figure:
                       xaxis_title="False Positive Rate",
                       yaxis_title="True Positive Rate")
     return fig
-
-
+ 
+ 
 def pr_curve_chart(results: dict) -> go.Figure:
     fig = go.Figure()
     for name, r in results.items():
@@ -156,8 +179,8 @@ def pr_curve_chart(results: dict) -> go.Figure:
     fig.update_layout(title="Precision-Recall Curves – All Models",
                       xaxis_title="Recall", yaxis_title="Precision")
     return fig
-
-
+ 
+ 
 def model_comparison_bar(results: dict) -> go.Figure:
     metrics = ["accuracy", "precision", "recall", "f1", "roc_auc"]
     rows = []
@@ -169,8 +192,8 @@ def model_comparison_bar(results: dict) -> go.Figure:
                  barmode="group", title="Model Comparison by Metric",
                  range_y=[0, 1])
     return fig
-
-
+ 
+ 
 def probability_distribution(results: dict, best_name: str) -> go.Figure:
     r = results[best_name]
     df = pd.DataFrame({"y_proba": r["y_proba"], "y_test": r["y_test"]})

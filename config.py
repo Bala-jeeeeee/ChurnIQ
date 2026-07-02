@@ -14,7 +14,7 @@ ID_COL     = "customer_id"
 
 # ── Feature Groups ─────────────────────────────────────────────────────────
 CATEGORICAL_FEATURES = [
-    "gender", "country", "city", "customer_segment",
+    "gender", "country", "customer_segment",
     "signup_channel", "contract_type", "payment_method",
     "discount_applied", "price_increase_last_3m",
     "complaint_type", "survey_response",
