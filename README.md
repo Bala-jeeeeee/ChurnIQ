@@ -58,5 +58,14 @@ Best model auto-selected by ROC-AUC and saved for prediction.
 
 ## ⚙️ Requirements
 
-- Python 3.10+
+- Python 3.11+
 - Streamlit 1.40+
+- Pandas	2.x
+- NumPy	1.x
+- Plotly	5.x
+- Scikit-Learn	1.x
+- XGBoost	2.x
+- SQLite3	Built-in
+- Joblib	1.x
+- Matplotlib	3.x
+- Seaborn	0.13+
