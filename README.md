@@ -58,7 +58,7 @@ Best model auto-selected by ROC-AUC and saved for prediction.
 
 ## ⚙️ Requirements
 
-- Python 3.10+
+- Python 3.11+
 - Streamlit 1.40+
 - Pandas	2.x
 - NumPy	1.x
@@ -69,4 +69,7 @@ Best model auto-selected by ROC-AUC and saved for prediction.
 - Joblib	1.x
 - Matplotlib	3.x
 - Seaborn	0.13+
+<<<<<<< HEAD
 
+=======
+>>>>>>> 7a75384 (ChurnIQ-v2)
